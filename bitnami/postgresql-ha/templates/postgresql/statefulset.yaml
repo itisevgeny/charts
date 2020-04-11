@@ -104,6 +104,14 @@ spec:
             - name: POSTGRES_DB
               value: {{ (include "postgresql-ha.postgresqlDatabase" .) | quote }}
             {{- end }}
+            - name: POSTGRESQL_ENABLE_TLS
+              value: {{ ternary "yes" "no" .Values.postgresql.tls.enabled | quote }}
+            {{- if .Values.postgresql.tls.enabled }}
+            - name: POSTGRESQL_TLS_CERT_FILE
+              value: {{ printf "%s/%s" "/opt/bitnami/postgresql/conf/tls" .Values.postgresql.tls.certFileName | quote }}
+            - name: POSTGRESQL_TLS_KEY_FILE
+              value: {{ printf "%s/%s" "/opt/bitnami/postgresql/conf/tls" .Values.postgresql.tls.keyFileName | quote }}
+            {{- end }}
             # Repmgr configuration
             - name: MY_POD_NAME
               valueFrom:
@@ -205,6 +213,10 @@ spec:
             - name: data
               mountPath: {{ .Values.persistence.mountPath }}
             {{- end }}
+            {{- if .Values.postgresql.tls.enabled }}
+            - name: postgresql-tls
+              mountPath: /opt/bitnami/postgresql/conf/tls
+            {{- end }}
         {{- if .Values.metrics.enabled }}
         - name: metrics
           image: {{ include "postgresql-ha.metricsImage" . }}
@@ -273,6 +285,12 @@ spec:
         - name: postgresql-extended-config
           configMap:
             name: {{ template "postgresql-ha.postgresqlExtendedConfCM" . }}
+        {{- end }}
+        {{- if .Values.postgresql.tls.enabled }}
+        - name: postgresql-tls
+          secret:
+            defaultMode: 0600
+            secretName: {{ .Values.postgresql.tls.secretName | quote }}
         {{- end }}
         {{- if .Values.postgresql.initdbScriptsSecret }}
         - name: custom-init-scripts-secret

@@ -71,6 +71,14 @@ spec:
             {{- end }}
             - name: PGPOOL_ENABLE_LOAD_BALANCING
               value: {{ ternary "yes" "no" .Values.pgpool.useLoadBalancing | quote }}
+            - name: PGPOOL_ENABLE_TLS
+              value: {{ ternary "yes" "no" .Values.pgpool.tls.enabled | quote }}
+            {{- if .Values.pgpool.tls.enabled }}
+            - name: PGPOOL_TLS_CERT_FILE
+              value: {{ printf "%s/%s" "/opt/bitnami/pgpool/conf/tls" .Values.pgpool.tls.certFileName | quote }}
+            - name: PGPOOL_TLS_KEY_FILE
+              value: {{ printf "%s/%s" "/opt/bitnami/pgpool/conf/tls" .Values.pgpool.tls.keyFileName | quote }}
+            {{- end }}
             - name: PGPOOL_ENABLE_LDAP
               value: {{ ternary "yes" "no" .Values.ldap.enabled | quote }}
             {{- if .Values.ldap.enabled }}
@@ -184,11 +192,21 @@ spec:
             - name: pgpool-password
               mountPath: /opt/bitnami/pgpool/secrets/
             {{- end }}
+            {{- if .Values.pgpool.tls.enabled }}
+            - name: pgpool-tls
+              mountPath: /opt/bitnami/pgpool/conf/tls
+            {{- end }}
       volumes:
         {{- if or (.Files.Glob "files/pgpool.conf") .Values.pgpool.configuration }}
         - name: pgpool-config
           configMap:
             name: {{ include "postgresql-ha.pgpoolConfigurationCM" . }}
+        {{- end }}
+        {{- if .Values.pgpool.tls.enabled }}
+        - name: pgpool-tls
+          secret:
+            defaultMode: 0600
+            secretName: {{ .Values.pgpool.tls.secretName | quote }}
         {{- end }}
         {{- if or (.Files.Glob "files/pgpool-entrypoint-initdb.d/*.sh") .Values.pgpool.initdbScripts .Values.pgpool.initdbScriptsCM }}
         - name: custom-init-scripts

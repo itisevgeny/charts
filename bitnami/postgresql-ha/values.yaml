@@ -300,6 +300,12 @@ postgresql:
   ##
   # initdbScriptsSecret:
 
+  tls:
+    enabled: false
+    secretName: null
+    certFileName: tls.crt
+    keyFileName: tls.key
+
 ## Pgpool parameters
 ##
 pgpool:
@@ -438,6 +444,12 @@ pgpool:
   ## Use Pgpool Load-Balancing
   ##
   useLoadBalancing: true
+
+  tls:
+    enabled: false
+    secretName: null
+    certFileName: tls.crt
+    keyFileName: tls.key
 
 ## LDAP parameters
 ##
